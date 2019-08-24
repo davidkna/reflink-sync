@@ -1,3 +1,4 @@
+use reflink::reflink_or_copy;
 use same_file::is_same_file;
 use std::{
     collections::HashSet,
@@ -6,7 +7,6 @@ use std::{
 };
 use structopt::StructOpt;
 use walkdir::WalkDir;
-use reflink::reflink_or_copy;
 
 #[derive(StructOpt, Debug)]
 struct Opt {
@@ -32,14 +32,8 @@ fn files(root: &Path) -> io::Result<HashSet<PathBuf>> {
     Ok(out)
 }
 
-fn main() -> io::Result<()> {
-    let opt = Opt::from_args();
-
-    let src_path = opt.src;
-    let dst_path = opt.dst;
-
+fn sync(src_path: &Path, dst_path: &Path) -> io::Result<()> {
     assert!(src_path.is_dir());
-    assert!(dst_path.is_dir());
     assert!(!is_same_file(&src_path, &dst_path).unwrap());
 
     let src = files(&src_path)?;
@@ -66,10 +60,31 @@ fn main() -> io::Result<()> {
     for item in to_copy {
         let src = src_path.join(&item);
         let dst = dst_path.join(&item);
-        dst.parent().map(|p| fs::create_dir_all(p).unwrap());
+        let _ = fs::create_dir_all(dst.parent().unwrap());
         reflink_or_copy(&src, &dst).unwrap();
         println!("Copy {:?} -> {:?}", &src, &dst);
     }
+
+    Ok(())
+}
+
+fn main() -> io::Result<()> {
+    let opt = Opt::from_args();
+
+    let src_path = opt.src;
+    let dst_path = opt.dst;
+
+    dst_path
+        .read_dir()?
+        .filter_map(|i| i.ok())
+        .filter(|i| i.file_type().unwrap().is_dir())
+        .for_each(|i| {
+            let path = i.path();
+            let prefix = path.strip_prefix(&dst_path).unwrap();
+            let src = src_path.join(&prefix);
+            let dst = dst_path.join(&prefix);
+            sync(&src, &dst).unwrap();
+        });
 
     Ok(())
 }
