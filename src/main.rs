@@ -39,17 +39,21 @@ fn sync(src_path: &Path, dst_path: &Path) -> io::Result<()> {
     let src = files(&src_path)?;
     let dst = files(&dst_path)?;
 
-    let not_same = src.intersection(&dst).filter(|item| {
-        let src_copy = src_path.join(&item);
-        let dst_copy = dst_path.join(&item);
-        let src_meta = fs::metadata(src_copy).unwrap();
-        let dst_meta = fs::metadata(dst_copy).unwrap();
+    let not_same: Vec<PathBuf> = src
+        .intersection(&dst)
+        .filter(|item| {
+            let src_copy = src_path.join(&item);
+            let dst_copy = dst_path.join(&item);
+            let src_meta = fs::metadata(src_copy).unwrap();
+            let dst_meta = fs::metadata(dst_copy).unwrap();
 
-        src_meta.len() != dst_meta.len()
-            && src_meta.modified().unwrap() <= dst_meta.modified().unwrap()
-    });
-    let to_copy = src.difference(&dst).chain(not_same.clone());
-    let to_delete = dst.difference(&src).chain(not_same);
+            src_meta.len() != dst_meta.len()
+                || src_meta.modified().unwrap() > dst_meta.modified().unwrap()
+        })
+        .cloned()
+        .collect();
+    let to_copy = src.difference(&dst).chain(not_same.iter());
+    let to_delete = dst.difference(&src).chain(not_same.iter());
 
     for item in to_delete {
         let item = dst_path.join(&item);
