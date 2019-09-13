@@ -64,8 +64,13 @@ fn sync(src_path: &Path, dst_path: &Path) -> io::Result<()> {
     for item in to_copy {
         let src = src_path.join(&item);
         let dst = dst_path.join(&item);
-        let _ = fs::create_dir_all(dst.parent().unwrap());
-        reflink_or_copy(&src, &dst).unwrap();
+
+        let parent =  dst.parent().unwrap();
+        if !parent.exists() {
+            continue
+        }
+
+        reflink_or_copy(&src, &dst)?;
         println!("Copy {:?} -> {:?}", &src, &dst);
     }
 
