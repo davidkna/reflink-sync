@@ -34,10 +34,6 @@ fn files(root: &Path) -> io::Result<HashSet<PathBuf>> {
 
 fn sync(src_path: &Path, dst_path: &Path) -> io::Result<()> {
     assert!(!is_same_file(&src_path, &dst_path).unwrap());
-
-    if !src_path.exists() {
-        return Ok(());
-    }
     assert!(src_path.is_dir());
 
     let src = files(&src_path)?;
@@ -95,7 +91,10 @@ fn main() -> io::Result<()> {
             let prefix = path.strip_prefix(&dst_path).unwrap();
             let src = src_path.join(&prefix);
             let dst = dst_path.join(&prefix);
-            sync(&src, &dst).unwrap();
+
+            if src.exists() && src.is_dir() {
+                sync(&src, &dst).unwrap();
+            }
         });
 
     Ok(())
