@@ -65,9 +65,10 @@ fn sync(src_path: &Path, dst_path: &Path) -> io::Result<()> {
         let src = src_path.join(&item);
         let dst = dst_path.join(&item);
 
-        let parent =  dst.parent().unwrap();
-        if !parent.exists() {
-            continue
+        if !src.parent().map(|i| i.exists()).unwrap_or(false)
+            || !dst.parent().map(|i| i.exists()).unwrap_or(false)
+        {
+            continue;
         }
 
         reflink_or_copy(&src, &dst)?;
