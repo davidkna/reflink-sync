@@ -38,6 +38,7 @@ fn sync(src_path: &Path, dst_path: &Path) -> io::Result<()> {
     if !src_path.exists() {
         return Ok(());
     }
+    assert!(src_path.is_dir());
 
     let src = files(&src_path)?;
     let dst = files(&dst_path)?;
