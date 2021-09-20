@@ -1,3 +1,4 @@
+use clap::Clap;
 use reflink::reflink_or_copy;
 use same_file::is_same_file;
 use std::{
@@ -5,14 +6,13 @@ use std::{
     fs, io,
     path::{Path, PathBuf},
 };
-use structopt::StructOpt;
 use walkdir::WalkDir;
 
-#[derive(StructOpt, Debug)]
+#[derive(Clap, Debug)]
 struct Opt {
-    #[structopt(name = "SRC", parse(from_os_str))]
+    #[clap(name = "SRC", parse(from_os_str))]
     src: PathBuf,
-    #[structopt(name = "DST", parse(from_os_str))]
+    #[clap(name = "DST", parse(from_os_str))]
     dst: PathBuf,
 }
 
@@ -36,8 +36,8 @@ fn sync(src_path: &Path, dst_path: &Path) -> io::Result<()> {
     assert!(!is_same_file(&src_path, &dst_path).unwrap());
     assert!(src_path.is_dir());
 
-    let src = files(&src_path)?;
-    let dst = files(&dst_path)?;
+    let src = files(src_path)?;
+    let dst = files(dst_path)?;
 
     let not_same: Vec<PathBuf> = src
         .intersection(&dst)
@@ -77,7 +77,7 @@ fn sync(src_path: &Path, dst_path: &Path) -> io::Result<()> {
 }
 
 fn main() -> io::Result<()> {
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
 
     let src_path = opt.src;
     let dst_path = opt.dst;
