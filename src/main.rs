@@ -1,4 +1,4 @@
-use clap::Clap;
+use clap::Parser;
 use reflink::reflink_or_copy;
 use same_file::is_same_file;
 use std::{
@@ -8,7 +8,7 @@ use std::{
 };
 use walkdir::WalkDir;
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 struct Opt {
     #[clap(name = "SRC", parse(from_os_str))]
     src: PathBuf,
@@ -16,28 +16,27 @@ struct Opt {
     dst: PathBuf,
 }
 
-fn files(root: &Path) -> io::Result<HashSet<PathBuf>> {
-    let mut out = HashSet::new();
+fn files(root: &Path) -> HashSet<PathBuf> {
     WalkDir::new(root)
         .sort_by(|a, b| a.file_name().cmp(b.file_name()))
         .same_file_system(true)
         .into_iter()
-        .filter_map(|e| e.ok())
+        .filter_map(std::result::Result::ok)
         .filter(|i| i.file_type().is_file())
-        .for_each(|i| {
+        .fold(HashSet::new(), |mut out, i| {
             let path = i.into_path();
             let path = path.strip_prefix(root).unwrap();
             out.insert(path.into());
-        });
-    Ok(out)
+            out
+        })
 }
 
 fn sync(src_path: &Path, dst_path: &Path) -> io::Result<()> {
     assert!(!is_same_file(&src_path, &dst_path).unwrap());
     assert!(src_path.is_dir());
 
-    let src = files(src_path)?;
-    let dst = files(dst_path)?;
+    let src = files(src_path);
+    let dst = files(dst_path);
 
     let not_same: Vec<PathBuf> = src
         .intersection(&dst)
@@ -65,7 +64,7 @@ fn sync(src_path: &Path, dst_path: &Path) -> io::Result<()> {
         let src = src_path.join(&item);
         let dst = dst_path.join(&item);
 
-        if !dst.parent().map(|i| i.exists()).unwrap_or(false) {
+        if !dst.parent().map_or(false, std::path::Path::exists) {
             continue;
         }
 
@@ -84,7 +83,7 @@ fn main() -> io::Result<()> {
 
     dst_path
         .read_dir()?
-        .filter_map(|i| i.ok())
+        .filter_map(std::result::Result::ok)
         .filter(|i| i.file_type().unwrap().is_dir())
         .for_each(|i| {
             let path = i.path();
