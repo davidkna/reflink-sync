@@ -1,18 +1,19 @@
-use clap::Parser;
-use reflink::reflink_or_copy;
-use same_file::is_same_file;
 use std::{
     collections::HashSet,
     fs, io,
     path::{Path, PathBuf},
 };
+
+use clap::Parser;
+use reflink::reflink_or_copy;
+use same_file::is_same_file;
 use walkdir::WalkDir;
 
 #[derive(Parser, Debug)]
 struct Opt {
-    #[clap(name = "SRC", parse(from_os_str))]
+    #[clap(name = "SRC")]
     src: PathBuf,
-    #[clap(name = "DST", parse(from_os_str))]
+    #[clap(name = "DST")]
     dst: PathBuf,
 }
 

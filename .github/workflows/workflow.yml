@@ -1,0 +1,94 @@
+# Based on https://github.com/actions-rs/meta/blob/master/recipes/quickstart.md
+
+---
+name: Main workflow
+on:
+  push:
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    paths-ignore:
+      - "**.md"
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUST_BACKTRACE: short
+  RUSTFLAGS: "-D warnings"
+  RUSTUP_MAX_RETRIES: 10
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3.0.2
+
+      - uses: Swatinem/rust-cache@v1.4.0
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1.0.7
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Run cargo check
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: check
+
+  test:
+      name: Test Suite
+      needs: check
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v3.0.2
+        - uses: Swatinem/rust-cache@v1.4.0
+        - name: Install stable toolchain
+          uses: actions-rs/toolchain@v1.0.7
+          with:
+            profile: minimal
+            toolchain: stable
+            components: llvm-tools-preview
+            override: true
+        - name: Install cargo-llvm-cov
+          run: cargo install --version 0.4.7 cargo-llvm-cov
+        - name: Install nextest
+          run: cargo install --version 0.9.22 cargo-nextest
+        - name: Generate code coverage
+          run: cargo llvm-cov nextest --all-features --workspace --lcov --output-path lcov.info
+        - name: Upload coverage to Codecov
+          uses: codecov/codecov-action@v3
+          with:
+            token: ${{ secrets.CODECOV_TOKEN }}
+            files: lcov.info
+
+  lints:
+    name: Lints
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3.0.2
+
+      - uses: Swatinem/rust-cache@v1.4.0
+
+      - name: Install nightly toolchain
+        uses: actions-rs/toolchain@v1.0.7
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: rustfmt, clippy
+
+      - name: Run cargo fmt
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: Run cargo clippy
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: clippy
+          args: -- -D warnings
