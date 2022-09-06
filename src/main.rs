@@ -33,7 +33,7 @@ fn files(root: &Path) -> HashSet<PathBuf> {
 }
 
 fn sync(src_path: &Path, dst_path: &Path) -> io::Result<()> {
-    assert!(!is_same_file(&src_path, &dst_path).unwrap());
+    assert!(!is_same_file(src_path, dst_path).unwrap());
     assert!(src_path.is_dir());
 
     let src = files(src_path);
@@ -42,8 +42,8 @@ fn sync(src_path: &Path, dst_path: &Path) -> io::Result<()> {
     let not_same: Vec<PathBuf> = src
         .intersection(&dst)
         .filter(|item| {
-            let src_copy = src_path.join(&item);
-            let dst_copy = dst_path.join(&item);
+            let src_copy = src_path.join(item);
+            let dst_copy = dst_path.join(item);
             let src_meta = fs::metadata(src_copy).unwrap();
             let dst_meta = fs::metadata(dst_copy).unwrap();
 
@@ -56,14 +56,14 @@ fn sync(src_path: &Path, dst_path: &Path) -> io::Result<()> {
     let to_delete = dst.difference(&src).chain(not_same.iter());
 
     for item in to_delete {
-        let item = dst_path.join(&item);
+        let item = dst_path.join(item);
         fs::remove_file(&item).unwrap();
         println!("Delete {:?}", &item);
     }
 
     for item in to_copy {
-        let src = src_path.join(&item);
-        let dst = dst_path.join(&item);
+        let src = src_path.join(item);
+        let dst = dst_path.join(item);
 
         if !dst.parent().map_or(false, std::path::Path::exists) {
             continue;
@@ -89,8 +89,8 @@ fn main() -> io::Result<()> {
         .for_each(|i| {
             let path = i.path();
             let prefix = path.strip_prefix(&dst_path).unwrap();
-            let src = src_path.join(&prefix);
-            let dst = dst_path.join(&prefix);
+            let src = src_path.join(prefix);
+            let dst = dst_path.join(prefix);
 
             if src.exists() && src.is_dir() {
                 sync(&src, &dst).unwrap();
