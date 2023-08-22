@@ -3,9 +3,16 @@
   "extends": [
     "github>davidkna/renovate-config"
   ],
-  "regexManagers": [{
-    "fileMatch": [".dprint.json"],
-    "matchStrings": ["\"https://github.com/(?<depName>.+)/releases/download/(?<currentValue>.+?)/plugin.wasm\""],
-    "datasourceTemplate": "github-releases"
-  }]
+  "regexManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [
+        ".dprint.json"
+      ],
+      "matchStrings": [
+        "\"https://github.com/(?<depName>.+)/releases/download/(?<currentValue>.+?)/plugin.wasm\""
+      ],
+      "datasourceTemplate": "github-releases"
+    }
+  ]
 }
