@@ -3,7 +3,7 @@
   "extends": [
     "github>davidkna/renovate-config"
   ],
-  "regexManagers": [
+  "customManagers": [
     {
       "customType": "regex",
       "fileMatch": [
