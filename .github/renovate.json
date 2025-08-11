@@ -2,17 +2,5 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "github>davidkna/renovate-config"
-  ],
-  "customManagers": [
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/.dprint.json/"
-      ],
-      "matchStrings": [
-        "\"https://github.com/(?<depName>.+)/releases/download/(?<currentValue>.+?)/plugin.wasm\""
-      ],
-      "datasourceTemplate": "github-releases"
-    }
   ]
 }
