@@ -1,3 +1,5 @@
+#![allow(clippy::unnecessary_debug_formatting)]
+
 use std::{
     collections::HashSet,
     fs, io,
@@ -58,7 +60,7 @@ fn sync(src_path: &Path, dst_path: &Path) -> io::Result<()> {
     for item in to_delete {
         let item = dst_path.join(item);
         fs::remove_file(&item).unwrap();
-        println!("Delete {:?}", &item);
+        println!("Delete {item:?}");
     }
 
     for item in to_copy {
@@ -70,7 +72,7 @@ fn sync(src_path: &Path, dst_path: &Path) -> io::Result<()> {
         }
 
         reflink_or_copy(&src, &dst)?;
-        println!("Copy {:?} -> {:?}", &src, &dst);
+        println!("Copy {src:?} -> {dst:?}");
     }
 
     Ok(())
